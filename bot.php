@@ -13,6 +13,7 @@ use Huntress\Huntress;
 use Huntress\SentryTransport;
 use React\EventLoop\Factory;
 use Sentry\ClientBuilder;
+use Sentry\SentrySdk;
 use Sentry\State\Hub;
 use Sentry\State\Scope;
 use Throwable;
@@ -41,7 +42,7 @@ Hub::setCurrent((new Hub($client)));
 set_exception_handler(function (Throwable $e) {
     $scope = new Scope();
     $scope->setExtra('fatal', true);
-    Hub::getCurrent()->getClient()->captureException($e, $scope);
+    SentrySdk::getCurrentHub()->getClient()->captureException($e, $scope);
 });
 
 if (PHP_SAPI != "cli") {
