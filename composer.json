@@ -1,0 +1,31 @@
+{
+  "name": "sylae/huntress-gaywatch",
+  "type": "project",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Keira Dueck",
+      "email": "sylae@calref.net"
+    }
+  ],
+  "require": {
+    "sylae/huntress": "dev-master"
+  },
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/sylae/huntress"
+    }
+  ],
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "autoload": {
+    "psr-4": {
+      "": "src/"
+    }
+  },
+  "config": {
+    "optimize-autoloader": true,
+    "sort-packages": true
+  }
+}
