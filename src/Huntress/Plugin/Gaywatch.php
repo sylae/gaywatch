@@ -39,7 +39,7 @@ class Gaywatch implements PluginInterface
             self::class,
             'db',
         ]));
-        $bot->eventManager->addURLEvent("https://forums.spacebattles.com/forums/worm.115/", 300,
+        $bot->eventManager->addURLEvent("https://forums.spacebattles.com/forums/worm.115/", 90,
             [self::class, "sbHell"]);
 
         $bot->on(self::PLUGINEVENT_COMMAND_PREFIX . "gaywatch", [self::class, "gaywatch"]);
@@ -63,7 +63,7 @@ class Gaywatch implements PluginInterface
             $t = self::_split($message->content);
             if (count($t) < 2) {
                 $qb = DatabaseFactory::get()->createQueryBuilder();
-                $qb->select("*")->from("pct_sbhell")->where('`gaywatch` = 1');
+                $qb->select("*")->from("pct_sbhell")->where('`gaywatch` = 1')->orderBy('title');
                 $res = $qb->execute()->fetchAll();
                 $r = [];
                 if ($message->member->roles->has(406698099143213066)) {
@@ -71,7 +71,7 @@ class Gaywatch implements PluginInterface
                 }
                 foreach ($res as $data) {
                     $title = $data['title'] ?? "<Title unknown>";
-                    $r[] = "*$title* - <https://forums.spacebattles.com/threads/{$data['idTopic']}/>";
+                    $r[] = "<https://forums.spacebattles.com/threads/{$data['idTopic']}/> - *$title*";
                 }
                 return $message->channel->send(implode("\n", $r), ['split' => true]);
             }
@@ -121,16 +121,17 @@ class Gaywatch implements PluginInterface
                         'id' => preg_replace('/.*?(\d+)\/?$/', '$1',
                             $item->find('.structItem-title > a')->attr("href")),
                         'title' => trim($item->find('.structItem-title > a')->text()),
-                        'threadTime' => new Carbon($item->find('.structItem-startDate time')->attr('datetime')),
-                        'replyTime' => new Carbon($item->find('time.structItem-latestDate')->attr('datetime')),
+                        'threadTime' => (new Carbon($item->find('.structItem-startDate time')->attr('datetime')))->setTimezone("UTC"),
+                        'replyTime' => (new Carbon($item->find('time.structItem-latestDate')->attr('datetime')))->setTimezone("UTC"),
                         'author' => [
                             'name' => $item->attr('data-author'),
                             'av' => "https://forums.spacebattles.com" . $item->find('.structItem-cell--icon:not(.structItem-cell--iconEnd) img')->attr("src"),
-                            'url' => "https://forums.spacebattles.com" . $item->find('.structItem-cell--icon:not(.structItem-cell--iconEnd) a')->attr("href"),
+                            'url' => "https://forums.spacebattles.com" . $item->find('.structItem-cell--main a.username')->attr("href"),
                         ],
                         'replier' => [
+                            'name' => $item->find('.structItem-cell--latest a.username')->text(),
                             'av' => "https://forums.spacebattles.com" . $item->find('.structItem-cell--iconEnd img')->attr("src"),
-                            'url' => "https://forums.spacebattles.com" . $item->find('.structItem-cell--iconEnd a')->attr("href"),
+                            'url' => "https://forums.spacebattles.com" . $item->find('.structItem-cell--latest a.username')->attr("href"),
                         ],
                         'numReplies' => trim($item->find('.structItem-cell--meta dl:not(.structItem-minor) dd')->text()),
                         'numViews' => trim($item->find('.structItem-cell--meta dl.structItem-minor dd')->text()),
@@ -159,7 +160,7 @@ class Gaywatch implements PluginInterface
                             if (mb_strlen($x->wordcount) > 0) {
                                 $embed->addField("Wordcount", $x->wordcount, true);
                             }
-                            $bot->channels->get(540449157320802314)->send("<@&5 DONT PING THEM THIS IS A TEST 40465395576864789>: {$x->author['name']} has updated *{$x->title}*\n<https://forums.spacebattles.com/threads/{$x->id}/unread>",
+                            $bot->channels->get(540449157320802314)->send("<@&540465395576864789>: {$x->author['name']} has updated *{$x->title}*\n<https://forums.spacebattles.com/threads/{$x->id}/unread>",
                                 ['embed' => $embed]);
                         } else {
                             // not op update
