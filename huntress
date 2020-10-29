@@ -1,6 +1,1 @@
-#!/bin/sh
-until php bot.php; do
-    echo "Process ended with exit code $?. Restarting..."
-    sleep 1
-done
-echo "Process ended with exit code $?. Not restarting."
+do { php bot.php | Wait-Process -Name php} while (!$Process)

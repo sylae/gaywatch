@@ -1,0 +1,1 @@
+do { php bot.php | Wait-Process -Name php} while (!$Process)

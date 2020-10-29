@@ -168,6 +168,23 @@ class Gaywatch implements PluginInterface
                         }
                     }
 
+                    if (!self::alreadyPosted($x)) {
+                        $embed = new MessageEmbed();
+                        $embed->setTitle($x->title)->setColor(0x00ff00)
+                            ->setURL("https://forums.spacebattles.com/threads/{$x->id}/")
+                            ->setAuthor($x->author['name'], $x->author['av'], $x->author['url'])
+                            ->addField("Created", $x->threadTime->toFormattedDateString(), true)
+                            ->addField("Replies", $x->numReplies, true)
+                            ->addField("Views", $x->numViews, true)
+                            ->setFooter("Last reply")
+                            ->setTimestamp($x->replyTime->timestamp);
+
+                        if (mb_strlen($x->wordcount) > 0) {
+                            $embed->addField("Wordcount", $x->wordcount, true);
+                        }
+                        $bot->channels->get(514258427258601474)->send("", ['embed' => $embed]);
+                    }
+
 
                     // push to db
                     $query = DatabaseFactory::get()->prepare('INSERT INTO pct_sbhell (`idTopic`, `timeTopicPost`, `timeLastReply`, `title`) VALUES(?, ?, ?, ?) '

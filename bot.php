@@ -6,16 +6,15 @@
  * can be found in the LICENSE file.
  */
 
-namespace Shelyn;
+namespace Huntress;
 
 use CharlotteDunois\Yasmin\Utils\URLHelpers;
-use Huntress\Huntress;
-use Huntress\SentryTransport;
 use React\EventLoop\Factory;
 use Sentry\ClientBuilder;
 use Sentry\SentrySdk;
 use Sentry\State\Hub;
 use Sentry\State\Scope;
+use Sentry\Transport\NullTransport;
 use Throwable;
 
 require_once __DIR__ . "/vendor/autoload.php";
@@ -31,18 +30,27 @@ define('VERSION', trim(`git rev-parse HEAD`) . ($rv == 1 ? "-modified" : ""));
 
 // initialize Sentry
 $builder = ClientBuilder::create(array_merge($config['sentry'], [
-    'release' => 'huntress-gaywatch@' . VERSION,
+    'release' => 'huntress@' . VERSION,
 ]));
-
-$transport = new SentryTransport($builder->getOptions(), $loop);
-
-$client = $builder->setTransport($transport)->getClient();
-Hub::setCurrent((new Hub($client)));
+if (php_uname('s') == "Windows NT") {
+    $transport = new NullTransport();
+    $client = $builder->setTransport($transport)->getClient();
+} else {
+    $transport = new SentryTransportFactory();
+    $transport->setLoop($loop);
+    $client = $builder->setTransportFactory($transport)->getClient();
+}
+SentrySdk::setCurrentHub(new Hub($client));
 
 set_exception_handler(function (Throwable $e) {
     $scope = new Scope();
     $scope->setExtra('fatal', true);
-    SentrySdk::getCurrentHub()->getClient()->captureException($e, $scope);
+    Hub::getCurrent()->getClient()->captureException($e, $scope);
+    if (property_exists($e, "xdebug_message")) {
+        echo $e->xdebug_message;
+    } else {
+        echo $e->getMessage() . PHP_EOL . PHP_EOL . $e->getTraceAsString();
+    }
 });
 
 if (PHP_SAPI != "cli") {
@@ -57,11 +65,6 @@ if (!is_writable("temp")) {
 
 foreach (glob(__DIR__ . "/src/Huntress/Plugin/*.php") as $file) {
     require_once($file);
-}
-$vanilla_plugins = [
-];
-foreach ($vanilla_plugins as $file) {
-    require_once("vendor/sylae/huntress/src/Huntress/Plugin/" . $file . ".php");
 }
 
 $huntress_inhibit_auto_restart = false;
